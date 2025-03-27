@@ -26,24 +26,6 @@ import { useToast } from "@/components/ui/use-toast"
 import Image from "next/image"
 import { Heart, Brain, Zap, Search } from "lucide-react"
 
-const availablePets = [
-  {
-    id: "pet-3",
-    name: "Luna",
-    type: "Cat",
-    rarity: "Common",
-    imageUrl: "https://virtual-pet-images.s3.amazonaws.com/pets/e35c4f70-8008-498f-903b-2f494f85184b.png",
-    description: "A playful and curious cat who loves to explore.",
-    traits: ["Playful", "Curious", "Friendly"],
-    stats: {
-      energy: 85,
-      intelligence: 70,
-      affection: 90,
-    },
-  },
-  // Add other pets here...
-]
-
 export default function PetsPage() {
   const { user } = useAuth()
   const router = useRouter()
@@ -52,20 +34,41 @@ export default function PetsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [petType, setPetType] = useState("all")
   const [rarity, setRarity] = useState("all")
-  const [filteredPets, setFilteredPets] = useState(availablePets)
+  const [filteredPets, setFilteredPets] = useState([])
 
   useEffect(() => {
-    const filtered = availablePets.filter((pet) => {
-      const matchesSearch =
-        pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pet.description.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesType = petType === "all" || pet.type === petType
-      const matchesRarity = rarity === "all" || pet.rarity === rarity
+    const fetchPets = async () => {
+      try {
+        const response = await fetch("/api/getAvailablePets")
+        const data = await response.json()
+        setFilteredPets(data)
+      } catch (error) {
+        console.error("Failed to fetch pets:", error)
+      }
+    }
 
-      return matchesSearch && matchesType && matchesRarity
-    })
+    fetchPets()
+  }, [])
 
-    setFilteredPets(filtered)
+  useEffect(() => {
+    const filterPets = async () => {
+      const response = await fetch("/api/getAvailablePets")
+      const pets = await response.json()
+
+      const filtered = pets.filter((pet) => {
+        const matchesSearch =
+          pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pet.description.toLowerCase().includes(searchTerm.toLowerCase())
+        const matchesType = petType === "all" || pet.type === petType
+        const matchesRarity = rarity === "all" || pet.rarity === rarity
+
+        return matchesSearch && matchesType && matchesRarity
+      })
+
+      setFilteredPets(filtered)
+    }
+
+    filterPets()
   }, [searchTerm, petType, rarity])
 
   const handleAdopt = (petId: string) => {
@@ -146,7 +149,7 @@ export default function PetsPage() {
         <TabsContent value="grid">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPets.map((pet) => (
-              <Card key={pet.id} className="overflow-hidden">
+              <Card key={pet.petId} className="overflow-hidden">
                 <div className="relative h-48 w-full">
                   <Image
                     src={pet.imageUrl || "/placeholder.svg"}
@@ -168,7 +171,7 @@ export default function PetsPage() {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex flex-wrap gap-1">
-                      {pet.traits.map((trait) => (
+                      {pet.traits?.map((trait) => (
                         <Badge key={trait} variant="secondary" className="text-xs">
                           {trait}
                         </Badge>
@@ -180,27 +183,27 @@ export default function PetsPage() {
                           <Zap className="w-4 h-4 mr-1 text-yellow-500" />
                           <span className="text-sm">Energy</span>
                         </div>
-                        <span className="font-bold">{pet.stats.energy}</span>
+                        <span className="font-bold">{pet.stats?.energy}</span>
                       </div>
                       <div className="flex flex-col items-center">
                         <div className="flex items-center mb-1">
                           <Brain className="w-4 h-4 mr-1 text-purple-500" />
                           <span className="text-sm">Intel</span>
                         </div>
-                        <span className="font-bold">{pet.stats.intelligence}</span>
+                        <span className="font-bold">{pet.stats?.intelligence}</span>
                       </div>
                       <div className="flex flex-col items-center">
                         <div className="flex items-center mb-1">
                           <Heart className="w-4 h-4 mr-1 text-red-500" />
                           <span className="text-sm">Love</span>
                         </div>
-                        <span className="font-bold">{pet.stats.affection}</span>
+                        <span className="font-bold">{pet.stats?.affection}</span>
                       </div>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button className="w-full" onClick={() => handleAdopt(pet.id)}>
+                  <Button className="w-full" onClick={() => handleAdopt(pet.petId)}>
                     Adopt {pet.name}
                   </Button>
                 </CardFooter>
@@ -208,8 +211,6 @@ export default function PetsPage() {
             ))}
           </div>
         </TabsContent>
-
-        {/* List view skipped for brevity, let me know if you want that too */}
       </Tabs>
     </div>
   )
