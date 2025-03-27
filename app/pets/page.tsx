@@ -42,7 +42,7 @@ const [loading, setLoading] = useState(true)
 useEffect(() => {
   const fetchPets = async () => {
     try {
-      const res = await fetch("https://your-api-gateway-url.amazonaws.com/pets")
+      const res = await fetch("https://r24i16yke4.execute-api.us-west-2.amazonaws.com/pets")
       const data = await res.json()
       const unadoptedPets = data.filter((pet) => pet.isAdopted === false)
       setAvailablePets(unadoptedPets)
