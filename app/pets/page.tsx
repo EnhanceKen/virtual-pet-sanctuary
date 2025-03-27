@@ -34,39 +34,40 @@ export default function PetsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [petType, setPetType] = useState("all")
   const [rarity, setRarity] = useState("all")
-
-  const [availablePets, setAvailablePets] = useState([])
   const [filteredPets, setFilteredPets] = useState([])
+  const [availablePets, setAvailablePets] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // ✅ Fetch pets from live API Gateway
   useEffect(() => {
-  const fetchPets = async () => {
-    try {
-      const res = await fetch("https://r24i16yke4.execute-api.us-west-2.amazonaws.com/pets")
-      const result = await res.json()
-      const unadoptedPets = result.pets.filter((pet) => pet.isAdopted === false)
-      setAvailablePets(unadoptedPets)
-      setFilteredPets(unadoptedPets)
-      setLoading(false)
-    } catch (error) {
-      console.error("Failed to fetch pets:", error)
-      setLoading(false)
+    const fetchPets = async () => {
+      try {
+        const res = await fetch("https://r24i16yke4.execute-api.us-west-2.amazonaws.com/pets")
+        const result = await res.json()
+        const unadoptedPets = result.pets.filter((pet) => pet.isAdopted === false)
+
+        console.log("🐾 Fetched pets:", unadoptedPets)
+
+        setAvailablePets(unadoptedPets)
+        setFilteredPets(unadoptedPets)
+        setLoading(false)
+      } catch (error) {
+        console.error("Failed to fetch pets:", error)
+        setLoading(false)
+      }
     }
-  }
 
-  fetchPets()
-}, [])
+    fetchPets()
+  }, [])
 
-
-  // 🔍 Filter pets based on search/filters
   useEffect(() => {
     const filtered = availablePets.filter((pet) => {
       const matchesSearch =
-        pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pet.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         pet.description?.toLowerCase().includes(searchTerm.toLowerCase())
+
       const matchesType = petType === "all" || pet.type === petType
       const matchesRarity = rarity === "all" || pet.rarity === rarity
+
       return matchesSearch && matchesType && matchesRarity
     })
 
@@ -141,7 +142,9 @@ export default function PetsPage() {
 
       <Tabs defaultValue="grid" className="w-full">
         <div className="flex justify-between items-center mb-6">
-          <p className="text-muted-foreground">{filteredPets.length} pets available for adoption</p>
+          <p className="text-muted-foreground">
+            {filteredPets.length} pets available for adoption
+          </p>
           <TabsList>
             <TabsTrigger value="grid">Grid</TabsTrigger>
             <TabsTrigger value="list">List</TabsTrigger>
@@ -150,67 +153,73 @@ export default function PetsPage() {
 
         <TabsContent value="grid">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPets.map((pet) => (
-              <Card key={pet.petId} className="overflow-hidden">
-                <div className="relative h-48 w-full">
-                  <Image
-                    src={pet.imageUrl || "/placeholder.svg"}
-                    alt={pet.name}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-2 right-2">
-                    <Badge className="bg-primary">{pet.rarity}</Badge>
-                  </div>
-                </div>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>{pet.name}</CardTitle>
-                    <Badge variant="outline">{pet.type}</Badge>
-                  </div>
-                  <CardDescription>{pet.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap gap-1">
-                      {pet.traits?.map((trait) => (
-                        <Badge key={trait} variant="secondary" className="text-xs">
-                          {trait}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center mb-1">
-                          <Zap className="w-4 h-4 mr-1 text-yellow-500" />
-                          <span className="text-sm">Energy</span>
-                        </div>
-                        <span className="font-bold">{pet.stats?.energy}</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center mb-1">
-                          <Brain className="w-4 h-4 mr-1 text-purple-500" />
-                          <span className="text-sm">Intel</span>
-                        </div>
-                        <span className="font-bold">{pet.stats?.intelligence}</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center mb-1">
-                          <Heart className="w-4 h-4 mr-1 text-red-500" />
-                          <span className="text-sm">Love</span>
-                        </div>
-                        <span className="font-bold">{pet.stats?.affection}</span>
-                      </div>
+            {Array.isArray(filteredPets) && filteredPets.length > 0 ? (
+              filteredPets.map((pet) => (
+                <Card key={pet.petId} className="overflow-hidden">
+                  <div className="relative h-48 w-full">
+                    <Image
+                      src={pet.imageUrl || "/placeholder.svg"}
+                      alt={pet.name}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <Badge className="bg-primary">{pet.rarity}</Badge>
                     </div>
                   </div>
-                </CardContent>
-                <CardFooter>
-                  <Button className="w-full" onClick={() => handleAdopt(pet.petId)}>
-                    Adopt {pet.name}
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <CardTitle>{pet.name}</CardTitle>
+                      <Badge variant="outline">{pet.type}</Badge>
+                    </div>
+                    <CardDescription>{pet.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap gap-1">
+                        {pet.traits?.map((trait) => (
+                          <Badge key={trait} variant="secondary" className="text-xs">
+                            {trait}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center mb-1">
+                            <Zap className="w-4 h-4 mr-1 text-yellow-500" />
+                            <span className="text-sm">Energy</span>
+                          </div>
+                          <span className="font-bold">{pet.stats?.energy}</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center mb-1">
+                            <Brain className="w-4 h-4 mr-1 text-purple-500" />
+                            <span className="text-sm">Intel</span>
+                          </div>
+                          <span className="font-bold">{pet.stats?.intelligence}</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center mb-1">
+                            <Heart className="w-4 h-4 mr-1 text-red-500" />
+                            <span className="text-sm">Love</span>
+                          </div>
+                          <span className="font-bold">{pet.stats?.affection}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button className="w-full" onClick={() => handleAdopt(pet.petId)}>
+                      Adopt {pet.name}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))
+            ) : (
+              <p className="col-span-full text-center text-muted-foreground">
+                No pets available at this time 🐾
+              </p>
+            )}
           </div>
         </TabsContent>
       </Tabs>
