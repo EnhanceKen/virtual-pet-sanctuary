@@ -36,19 +36,26 @@ export default function PetsPage() {
   const [rarity, setRarity] = useState("all")
   const [filteredPets, setFilteredPets] = useState([])
 
-  useEffect(() => {
-    const fetchPets = async () => {
-      try {
-        const response = await fetch("/api/getAvailablePets")
-        const data = await response.json()
-        setFilteredPets(data)
-      } catch (error) {
-        console.error("Failed to fetch pets:", error)
-      }
-    }
+  const [availablePets, setAvailablePets] = useState([])
+const [loading, setLoading] = useState(true)
 
-    fetchPets()
-  }, [])
+useEffect(() => {
+  const fetchPets = async () => {
+    try {
+      const res = await fetch("https://your-api-gateway-url.amazonaws.com/pets")
+      const data = await res.json()
+      const unadoptedPets = data.filter((pet) => pet.isAdopted === false)
+      setAvailablePets(unadoptedPets)
+      setLoading(false)
+    } catch (error) {
+      console.error("Failed to fetch pets:", error)
+      setLoading(false)
+    }
+  }
+
+  fetchPets()
+}, [])
+
 
   useEffect(() => {
     const filterPets = async () => {
