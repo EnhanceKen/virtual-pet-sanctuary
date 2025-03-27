@@ -34,49 +34,42 @@ export default function PetsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [petType, setPetType] = useState("all")
   const [rarity, setRarity] = useState("all")
-  const [filteredPets, setFilteredPets] = useState([])
 
   const [availablePets, setAvailablePets] = useState([])
-const [loading, setLoading] = useState(true)
+  const [filteredPets, setFilteredPets] = useState([])
+  const [loading, setLoading] = useState(true)
 
-useEffect(() => {
-  const fetchPets = async () => {
-    try {
-      const res = await fetch("https://r24i16yke4.execute-api.us-west-2.amazonaws.com/pets")
-      const data = await res.json()
-      const unadoptedPets = data.filter((pet) => pet.isAdopted === false)
-      setAvailablePets(unadoptedPets)
-      setLoading(false)
-    } catch (error) {
-      console.error("Failed to fetch pets:", error)
-      setLoading(false)
-    }
-  }
-
-  fetchPets()
-}, [])
-
-
+  // ✅ Fetch pets from live API Gateway
   useEffect(() => {
-    const filterPets = async () => {
-      const response = await fetch("/api/getAvailablePets")
-      const pets = await response.json()
-
-      const filtered = pets.filter((pet) => {
-        const matchesSearch =
-          pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          pet.description.toLowerCase().includes(searchTerm.toLowerCase())
-        const matchesType = petType === "all" || pet.type === petType
-        const matchesRarity = rarity === "all" || pet.rarity === rarity
-
-        return matchesSearch && matchesType && matchesRarity
-      })
-
-      setFilteredPets(filtered)
+    const fetchPets = async () => {
+      try {
+        const res = await fetch("https://r24i16yke4.execute-api.us-west-2.amazonaws.com/pets")
+        const data = await res.json()
+        const unadoptedPets = data?.pets?.filter((pet) => !pet.isAdopted)
+        setAvailablePets(unadoptedPets || [])
+      } catch (error) {
+        console.error("Failed to fetch pets:", error)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    filterPets()
-  }, [searchTerm, petType, rarity])
+    fetchPets()
+  }, [])
+
+  // 🔍 Filter pets based on search/filters
+  useEffect(() => {
+    const filtered = availablePets.filter((pet) => {
+      const matchesSearch =
+        pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pet.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesType = petType === "all" || pet.type === petType
+      const matchesRarity = rarity === "all" || pet.rarity === rarity
+      return matchesSearch && matchesType && matchesRarity
+    })
+
+    setFilteredPets(filtered)
+  }, [searchTerm, petType, rarity, availablePets])
 
   const handleAdopt = (petId: string) => {
     if (!user) {
