@@ -41,21 +41,23 @@ export default function PetsPage() {
 
   // ✅ Fetch pets from live API Gateway
   useEffect(() => {
-    const fetchPets = async () => {
-      try {
-        const res = await fetch("https://r24i16yke4.execute-api.us-west-2.amazonaws.com/pets")
-        const data = await res.json()
-        const unadoptedPets = data?.pets?.filter((pet) => !pet.isAdopted)
-        setAvailablePets(unadoptedPets || [])
-      } catch (error) {
-        console.error("Failed to fetch pets:", error)
-      } finally {
-        setLoading(false)
-      }
+  const fetchPets = async () => {
+    try {
+      const res = await fetch("https://r24i16yke4.execute-api.us-west-2.amazonaws.com/pets")
+      const result = await res.json()
+      const unadoptedPets = result.pets.filter((pet) => pet.isAdopted === false)
+      setAvailablePets(unadoptedPets)
+      setFilteredPets(unadoptedPets)
+      setLoading(false)
+    } catch (error) {
+      console.error("Failed to fetch pets:", error)
+      setLoading(false)
     }
+  }
 
-    fetchPets()
-  }, [])
+  fetchPets()
+}, [])
+
 
   // 🔍 Filter pets based on search/filters
   useEffect(() => {
